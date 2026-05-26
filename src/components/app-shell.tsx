@@ -9,41 +9,66 @@ import {
   Search,
   Plus,
   ShieldCheck,
+  Users,
+  ScrollText,
+  LogOut,
 } from "lucide-react";
 import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
+import { useAuth, type Role } from "@/lib/auth";
+import logo from "@/assets/itrack-logo.png";
 
-const nav = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles?: Role[]; // if set, restrict
+}
+
+const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/calendar", label: "Regional Calendar", icon: CalendarDays },
-  { to: "/approvals", label: "RD Approvals", icon: CheckSquare },
+  { to: "/approvals", label: "RD Approvals", icon: CheckSquare, roles: ["RD Approver", "Administrator", "Super Administrator"] },
   { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/admin/users", label: "User Management", icon: Users, roles: ["Administrator", "Super Administrator"] },
+  { to: "/audit", label: "Audit Logs", icon: ScrollText, roles: ["Super Administrator"] },
 ];
 
 export function AppShell({ children, title, action }: { children: ReactNode; title: string; action?: ReactNode }) {
   const { location } = useRouterState();
   const { events, documents } = useStore();
+  const { user, hasRole, logout } = useAuth();
   const pendingRD = events.filter((e) => e.status === "Pending RD Approval").length;
   const pendingDocs = documents.filter((d) => d.status === "Pending" || d.status === "For Approval").length;
+
+  const visibleNav = NAV.filter((n) => !n.roles || hasRole(...n.roles));
+
+  const initials =
+    user?.name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase() ?? "??";
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <aside className="hidden lg:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="px-6 py-5 border-b border-sidebar-border">
+        <div className="px-5 py-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center text-accent-foreground font-bold">
-              D
+            <div className="h-11 w-11 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
+              <img src={logo} alt="iTRACK" width={40} height={40} className="object-contain" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="font-display font-semibold text-sm leading-tight">DOST Caraga</div>
-              <div className="text-xs text-sidebar-foreground/70">DTS &amp; Calendar</div>
+              <div className="text-xs text-sidebar-foreground/70 tracking-wide">iTRACK</div>
             </div>
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {nav.map((n) => {
+          {visibleNav.map((n) => {
             const active = n.to === "/" ? location.pathname === "/" : location.pathname.startsWith(n.to);
             const badge =
               n.to === "/approvals" ? pendingRD : n.to === "/documents" ? pendingDocs : 0;
@@ -72,7 +97,7 @@ export function AppShell({ children, title, action }: { children: ReactNode; tit
         <div className="px-4 py-4 border-t border-sidebar-border text-xs text-sidebar-foreground/60">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Secure session · v1.0
+            Secure session · iTRACK v1.0
           </div>
         </div>
       </aside>
@@ -80,8 +105,8 @@ export function AppShell({ children, title, action }: { children: ReactNode; tit
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-10 bg-background/85 backdrop-blur border-b border-border">
           <div className="flex items-center gap-4 px-6 py-3">
-            <div>
-              <h1 className="text-xl font-display font-semibold text-foreground">{title}</h1>
+            <div className="min-w-0">
+              <h1 className="text-xl font-display font-semibold text-foreground truncate">{title}</h1>
             </div>
             <div className="flex-1 max-w-md hidden md:flex items-center gap-2 rounded-md border border-input bg-card px-3 py-1.5 text-sm">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -92,15 +117,29 @@ export function AppShell({ children, title, action }: { children: ReactNode; tit
             </div>
             <div className="ml-auto flex items-center gap-3">
               {action}
-              <button className="relative p-2 rounded-md hover:bg-muted">
+              <button className="relative p-2 rounded-md hover:bg-muted" aria-label="Notifications">
                 <Bell className="h-4 w-4" />
                 {(pendingRD + pendingDocs) > 0 && (
                   <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent" />
                 )}
               </button>
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
-                MC
+              <div className="hidden sm:flex flex-col items-end text-right leading-tight">
+                <span className="text-xs font-medium truncate max-w-[160px]">{user?.name}</span>
+                <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
+                  {user?.roles[0]}
+                </span>
               </div>
+              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                {initials}
+              </div>
+              <Link
+                to="/logout"
+                className="p-2 rounded-md hover:bg-muted text-muted-foreground"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </header>

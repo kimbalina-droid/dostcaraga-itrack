@@ -43,10 +43,11 @@
   --color-sidebar-border: var(--sidebar-border);
 
   --color-office-ord: var(--office-ord);
-  --color-office-fas: var(--office-fas);
+  --color-office-fod: var(--office-fod);
+  --color-office-tss: var(--office-tss);
+  --color-office-iu: var(--office-iu);
+  --color-office-mis: var(--office-mis);
   --color-office-psto: var(--office-psto);
-  --color-office-tech: var(--office-tech);
-  --color-office-other: var(--office-other);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -64,11 +65,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.04 260);
 
-  /* DOST Navy */
   --primary: oklch(0.31 0.08 260);
   --primary-foreground: oklch(0.99 0.003 250);
 
-  /* Civic Blue accent */
   --accent: oklch(0.62 0.18 255);
   --accent-foreground: oklch(0.99 0.003 250);
 
@@ -100,18 +99,19 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.35 0.06 260 / 60%);
 
-  /* Office color coding */
-  --office-ord: oklch(0.55 0.18 255);   /* Blue */
-  --office-fas: oklch(0.6 0.16 155);    /* Green */
-  --office-psto: oklch(0.7 0.17 55);    /* Orange */
-  --office-tech: oklch(0.55 0.2 295);   /* Purple */
-  --office-other: oklch(0.6 0.04 258);  /* Slate */
+  /* Office color coding (iTRACK spec) */
+  --office-ord: oklch(0.55 0.18 255);   /* ORD – Blue */
+  --office-fod: oklch(0.6 0.16 155);    /* FOD – Green */
+  --office-tss: oklch(0.55 0.2 295);    /* TSS – Purple */
+  --office-iu:  oklch(0.65 0.13 195);   /* IU  – Teal */
+  --office-mis: oklch(0.6 0.02 258);    /* MIS – Gray */
+  --office-psto: oklch(0.7 0.17 55);    /* PSTOs – Orange */
 
   --chart-1: oklch(0.62 0.18 255);
   --chart-2: oklch(0.6 0.16 155);
   --chart-3: oklch(0.7 0.17 55);
   --chart-4: oklch(0.55 0.2 295);
-  --chart-5: oklch(0.5 0.06 258);
+  --chart-5: oklch(0.65 0.13 195);
 }
 
 .dark {
