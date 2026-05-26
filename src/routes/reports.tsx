@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { useStore } from "@/lib/store";
-import { OFFICES, DOC_STATUSES } from "@/lib/mock-data";
+import { OFFICES, DOC_STATUSES, type DocumentRecord } from "@/lib/mock-data";
 import { format, parseISO, subDays, eachDayOfInterval } from "date-fns";
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
@@ -9,10 +9,37 @@ import {
 } from "recharts";
 import { Download, Printer, FileSpreadsheet } from "lucide-react";
 
+function getProcessingHours(document: DocumentRecord) {
+  const timestamps = document.timeline
+    .map((entry) => Date.parse(entry.at))
+    .filter((value) => !Number.isNaN(value))
+    .sort((a, b) => a - b);
+
+  if (timestamps.length === 0) {
+    const created = Date.parse(document.createdAt);
+    return Number.isNaN(created) ? 0 : 0;
+  }
+
+  const start = timestamps[0];
+  const end = timestamps[timestamps.length - 1];
+  return Math.max(0, (end - start) / (1000 * 60 * 60));
+}
+
+function formatProcessingTime(hours: number) {
+  if (hours <= 0) return "-";
+  if (hours < 24) return `${Math.round(hours * 10) / 10} hrs`;
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = Math.round((hours % 24) * 10) / 10;
+
+  if (remainingHours === 0) return `${days} day${days === 1 ? "" : "s"}`;
+  return `${days} day${days === 1 ? "" : "s"} ${remainingHours} hrs`;
+}
+
 export const Route = createFileRoute("/reports")({
   head: () => ({
     meta: [
-      { title: "Reports & Analytics — DOST Caraga DTS" },
+      { title: "Reports & Analytics - DOST Caraga DTS" },
       { name: "description", content: "Document and activity analytics." },
     ],
   }),
@@ -32,18 +59,27 @@ function Reports() {
     value: documents.filter((d) => d.status === s).length,
   })).filter((s) => s.value > 0);
 
-  const byOffice = OFFICES.map((o) => ({
-    office: o.name,
-    code: o.code,
-    received: documents.filter((d) => d.receivingOffice === o.code).length,
-    color: o.color,
-  }));
+  const byOffice = OFFICES.map((o) => {
+    const officeDocuments = documents.filter((d) => d.receivingOffice === o.code);
+    const processingTimes = officeDocuments.map(getProcessingHours);
+    const averageProcessingHours = processingTimes.length
+      ? processingTimes.reduce((sum, value) => sum + value, 0) / processingTimes.length
+      : 0;
+
+    return {
+      office: o.name,
+      code: o.code,
+      received: officeDocuments.length,
+      color: o.color,
+      averageProcessingHours,
+    };
+  });
 
   const completed = documents.filter((d) => d.status === "Released" || d.status === "Closed").length;
   const pending = documents.filter((d) => d.status === "Pending" || d.status === "For Approval").length;
   const avgTurnaround = "2.3 days";
 
-  const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+  const chartColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
   return (
     <AppShell
@@ -62,7 +98,7 @@ function Reports() {
         </div>
       }
     >
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Total Documents", value: documents.length },
           { label: "Completed / Released", value: completed },
@@ -76,8 +112,8 @@ function Reports() {
         ))}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
           <h3 className="font-display font-semibold">Documents Received (last 14 days)</h3>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -105,7 +141,7 @@ function Reports() {
               <PieChart>
                 <Pie data={byStatus} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={2}>
                   {byStatus.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    <Cell key={i} fill={chartColors[i % chartColors.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
@@ -116,8 +152,8 @@ function Reports() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-border bg-card overflow-hidden">
-        <div className="p-5 border-b border-border">
+      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
+        <div className="border-b border-border p-5">
           <h3 className="font-display font-semibold">Documents per Office</h3>
         </div>
         <table className="w-full text-sm">
@@ -125,6 +161,7 @@ function Reports() {
             <tr>
               <th className="px-5 py-3 font-medium">Office / Division</th>
               <th className="px-5 py-3 font-medium">Documents Received</th>
+              <th className="px-5 py-3 font-medium">Avg. Processing Time</th>
               <th className="px-5 py-3 font-medium">Share</th>
             </tr>
           </thead>
@@ -140,9 +177,12 @@ function Reports() {
                     </div>
                   </td>
                   <td className="px-5 py-3 font-medium">{o.received}</td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {formatProcessingTime(o.averageProcessingHours)}
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-40 h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-2 w-40 overflow-hidden rounded-full bg-muted">
                         <div className="h-full" style={{ width: `${pct}%`, backgroundColor: o.color }} />
                       </div>
                       <span className="text-xs text-muted-foreground">{pct}%</span>

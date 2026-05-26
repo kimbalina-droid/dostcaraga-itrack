@@ -32,6 +32,10 @@ function Field({ label, children, required }: { label: string; children: React.R
 const inputCls =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/30";
 
+function toIsoFromDateTime(date: string, time: string) {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
+
 function NewDocument() {
   const { addDocument } = useStore();
   const navigate = useNavigate();
@@ -59,7 +63,7 @@ function NewDocument() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.sender) return;
-    const now = new Date().toISOString();
+    const receivedAt = toIsoFromDateTime(form.dateReceived, form.timeReceived);
     const doc: DocumentRecord = {
       id: `d-${Date.now()}`,
       trackingNo,
@@ -80,13 +84,13 @@ function NewDocument() {
       timeline: [
         {
           id: `t-${Date.now()}`,
-          at: now,
+          at: receivedAt,
           officer: form.receivingOfficer,
           action: "Document registered & received",
           status: "Received",
         },
       ],
-      createdAt: now,
+      createdAt: receivedAt,
     };
     addDocument(doc);
     navigate({ to: "/documents/$id", params: { id: doc.id } });

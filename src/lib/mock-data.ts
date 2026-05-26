@@ -181,6 +181,7 @@ export interface DocumentRecord {
   routedToOfficer?: string;
   releasingOffice?: string;
   dateReleased?: string;
+  completedAt?: string;
   fileName?: string;
   confidentiality: Confidentiality | "Normal" | "Restricted";
   status: DocStatus;
@@ -309,6 +310,7 @@ export const seedDocuments: DocumentRecord[] = [
     routedTo: "MIS",
     releasingOffice: "MIS",
     dateReleased: dateOnly(-3),
+    completedAt: iso(-3, 10),
     confidentiality: "Internal",
     status: "Released",
     timeline: [
@@ -330,6 +332,7 @@ export const seedDocuments: DocumentRecord[] = [
     receivingOfficer: "Anna R. Velasco",
     receivingOffice: "MIS",
     routedTo: "IU",
+    completedAt: iso(-7, 15),
     confidentiality: "Internal",
     status: "Closed",
     timeline: [

@@ -5,8 +5,30 @@ import { DOC_STATUSES, OFFICES, type DocStatus, type OfficeCode } from "@/lib/mo
 import { StatusBadge } from "@/components/status-badge";
 import { OfficeChip } from "@/components/office-chip";
 import { format, parseISO } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Send, Clock, FileText } from "lucide-react";
+
+const completionStatuses: DocStatus[] = ["Released", "Completed", "Closed"];
+
+function splitIsoDateTime(value?: string) {
+  if (!value) {
+    const now = new Date();
+    return {
+      date: now.toISOString().slice(0, 10),
+      time: now.toTimeString().slice(0, 5),
+    };
+  }
+
+  const parsed = new Date(value);
+  return {
+    date: parsed.toISOString().slice(0, 10),
+    time: parsed.toTimeString().slice(0, 5),
+  };
+}
+
+function toIsoFromDateTime(date: string, time: string) {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
 
 export const Route = createFileRoute("/documents/$id")({
   head: ({ params }) => ({
@@ -33,17 +55,33 @@ function DocumentDetail() {
   const [newStatus, setNewStatus] = useState<DocStatus>(doc.status);
   const [routeTo, setRouteTo] = useState<OfficeCode>(doc.routedTo);
   const [rdInstr, setRdInstr] = useState(doc.directorInstructions ?? "");
+  const [completionDate, setCompletionDate] = useState(splitIsoDateTime(doc.completedAt).date);
+  const [completionTime, setCompletionTime] = useState(splitIsoDateTime(doc.completedAt).time);
+
+  useEffect(() => {
+    if (!completionStatuses.includes(newStatus)) return;
+    const completed = splitIsoDateTime(doc.completedAt);
+    setCompletionDate(completed.date);
+    setCompletionTime(completed.time);
+  }, [doc.completedAt, newStatus]);
 
   const addUpdate = () => {
     if (!remarks.trim()) return;
+    const entryTime = completionStatuses.includes(newStatus)
+      ? toIsoFromDateTime(completionDate, completionTime)
+      : new Date().toISOString();
+
     appendTimeline(doc.id, {
       id: `t-${Date.now()}`,
-      at: new Date().toISOString(),
+      at: entryTime,
       officer: "Maria S. Cabrera",
       action: newStatus !== doc.status ? `Status updated to ${newStatus}` : "Remarks added",
       remarks,
       status: newStatus,
     });
+    if (completionStatuses.includes(newStatus)) {
+      updateDocument(doc.id, { completedAt: entryTime });
+    }
     setRemarks("");
   };
 
@@ -86,10 +124,12 @@ function DocumentDetail() {
               <Info label="Confidentiality" value={doc.confidentiality} />
               <Info label="Sender" value={doc.sender} />
               <Info label="Date Received" value={format(parseISO(doc.createdAt), "PP")} />
-              <Info label="Time Received" value={doc.timeReceived} />
+              <Info label="Time Received" value={format(parseISO(doc.createdAt), "p")} />
               <Info label="Receiving Officer" value={doc.receivingOfficer} />
               <Info label="Receiving Office" value={<OfficeChip code={doc.receivingOffice} />} />
               <Info label="Routed To" value={<OfficeChip code={doc.routedTo} />} />
+              {doc.completedAt && <Info label="Date Completed" value={format(parseISO(doc.completedAt), "PP")} />}
+              {doc.completedAt && <Info label="Time Completed" value={format(parseISO(doc.completedAt), "p")} />}
               {doc.dateReleased && <Info label="Date Released" value={doc.dateReleased} />}
               {doc.fileName && <Info label="Attachment" value={`📎 ${doc.fileName}`} />}
             </div>
@@ -138,6 +178,28 @@ function DocumentDetail() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mb-3"
               placeholder="Describe the action taken…"
             />
+            {completionStatuses.includes(newStatus) && (
+              <div className="mb-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Date Completed</label>
+                  <input
+                    type="date"
+                    value={completionDate}
+                    onChange={(e) => setCompletionDate(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Time Completed</label>
+                  <input
+                    type="time"
+                    value={completionTime}
+                    onChange={(e) => setCompletionTime(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            )}
             <button
               onClick={addUpdate}
               className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90"

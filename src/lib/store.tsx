@@ -3,10 +3,13 @@ import {
   seedDocuments,
   seedEvents,
   type CalendarEvent,
+  type DocStatus,
   type DocumentRecord,
   type EventStatus,
   type TimelineEntry,
 } from "./mock-data";
+
+const terminalStatuses: DocStatus[] = ["Released", "Completed", "Closed"];
 
 interface StoreCtx {
   documents: DocumentRecord[];
@@ -34,9 +37,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       appendTimeline: (id, entry) =>
         setDocuments((prev) =>
           prev.map((d) =>
-            d.id === id
-              ? { ...d, timeline: [...d.timeline, entry], status: entry.status ?? d.status }
-              : d,
+            d.id !== id
+              ? d
+              : {
+                  ...d,
+                  timeline: [...d.timeline, entry],
+                  status: entry.status ?? d.status,
+                  completedAt: entry.status && terminalStatuses.includes(entry.status)
+                    ? entry.at
+                    : d.completedAt,
+                },
           ),
         ),
       addEvent: (e) => setEvents((prev) => [e, ...prev]),

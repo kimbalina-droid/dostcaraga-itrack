@@ -1,12 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PrimaryButton } from "@/components/app-shell";
 import { useStore } from "@/lib/store";
-import { DOC_STATUSES, DOC_TYPES, OFFICES, type DocStatus } from "@/lib/mock-data";
+import { DOC_STATUSES, DOC_TYPES, OFFICES, type DocStatus, type DocumentRecord } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { OfficeChip } from "@/components/office-chip";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Download, Filter } from "lucide-react";
+
+function getProcessingHours(document: DocumentRecord) {
+  const receivedAt = Date.parse(document.createdAt);
+  if (Number.isNaN(receivedAt)) return 0;
+
+  const completedAt = document.completedAt
+    ? Date.parse(document.completedAt)
+    : Math.max(
+        ...document.timeline
+          .map((entry) => Date.parse(entry.at))
+          .filter((value) => !Number.isNaN(value)),
+      );
+
+  if (!completedAt || Number.isNaN(completedAt) || completedAt <= receivedAt) return 0;
+  return (completedAt - receivedAt) / (1000 * 60 * 60);
+}
+
+function formatProcessingTime(hours: number) {
+  if (hours <= 0) return "-";
+  if (hours < 24) return `${Math.round(hours * 10) / 10} hrs`;
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = Math.round((hours % 24) * 10) / 10;
+
+  if (remainingHours === 0) return `${days} day${days === 1 ? "" : "s"}`;
+  return `${days} day${days === 1 ? "" : "s"} ${remainingHours} hrs`;
+}
 
 export const Route = createFileRoute("/documents/")({
   head: () => ({
@@ -103,7 +130,9 @@ function DocumentsList() {
               <th className="px-4 py-3 font-medium">Sender</th>
               <th className="px-4 py-3 font-medium">Office</th>
               <th className="px-4 py-3 font-medium">Received</th>
+              <th className="px-4 py-3 font-medium">Completed</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Processing Time</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -123,14 +152,28 @@ function DocumentsList() {
                 <td className="px-4 py-3 text-muted-foreground">{d.sender}</td>
                 <td className="px-4 py-3"><OfficeChip code={d.receivingOffice} /></td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {format(parseISO(d.createdAt), "MMM d, yyyy")}
+                  <div>{format(parseISO(d.createdAt), "MMM d, yyyy")}</div>
+                  <div className="text-xs">{format(parseISO(d.createdAt), "p")}</div>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {d.completedAt ? (
+                    <>
+                      <div>{format(parseISO(d.completedAt), "MMM d, yyyy")}</div>
+                      <div className="text-xs">{format(parseISO(d.completedAt), "p")}</div>
+                    </>
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {formatProcessingTime(getProcessingHours(d))}
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={9} className="px-4 py-10 text-center text-sm text-muted-foreground">
                   No documents match these filters.
                 </td>
               </tr>
