@@ -4,12 +4,17 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
+  Navigate,
 } from "@tanstack/react-router";
 import { StoreProvider } from "@/lib/store";
+import { AuthProvider, useAuth } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
+
+const PUBLIC_PATHS = new Set(["/login", "/register"]);
 
 function NotFoundComponent() {
   return (
@@ -57,8 +62,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DOST Caraga — Document Tracking & Regional Calendar" },
-      { name: "description", content: "Integrated document tracking and regional calendar management system for DOST Caraga." },
+      { title: "DOST Caraga iTRACK — Document Tracking & Regional Calendar" },
+      { name: "description", content: "Integrated Tracking, Records, Activity, and Calendar Keeper — the centralized operational platform of DOST Caraga." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -80,13 +85,24 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthGate() {
+  const { user } = useAuth();
+  const { location } = useRouterState();
+  const isPublic = PUBLIC_PATHS.has(location.pathname);
+  if (!user && !isPublic) return <Navigate to="/login" />;
+  if (user && isPublic) return <Navigate to="/" />;
+  return <Outlet />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <Outlet />
-      </StoreProvider>
+      <AuthProvider>
+        <StoreProvider>
+          <AuthGate />
+        </StoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

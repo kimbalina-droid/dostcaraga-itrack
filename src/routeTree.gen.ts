@@ -10,21 +10,46 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents.index'
 import { Route as DocumentsNewRouteImport } from './routes/documents.new'
 import { Route as DocumentsIdRouteImport } from './routes/documents.$id'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApprovalsRoute = ApprovalsRouteImport.update({
@@ -52,12 +77,22 @@ const DocumentsIdRoute = DocumentsIdRouteImport.update({
   path: '/documents/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/calendar': typeof CalendarRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/documents/$id': typeof DocumentsIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/': typeof DocumentsIndexRoute
@@ -65,8 +100,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/calendar': typeof CalendarRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/documents/$id': typeof DocumentsIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents': typeof DocumentsIndexRoute
@@ -75,8 +115,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/calendar': typeof CalendarRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/documents/$id': typeof DocumentsIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/': typeof DocumentsIndexRoute
@@ -86,8 +131,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/approvals'
+    | '/audit'
     | '/calendar'
+    | '/login'
+    | '/logout'
+    | '/register'
     | '/reports'
+    | '/admin/users'
     | '/documents/$id'
     | '/documents/new'
     | '/documents/'
@@ -95,8 +145,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/approvals'
+    | '/audit'
     | '/calendar'
+    | '/login'
+    | '/logout'
+    | '/register'
     | '/reports'
+    | '/admin/users'
     | '/documents/$id'
     | '/documents/new'
     | '/documents'
@@ -104,8 +159,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/approvals'
+    | '/audit'
     | '/calendar'
+    | '/login'
+    | '/logout'
+    | '/register'
     | '/reports'
+    | '/admin/users'
     | '/documents/$id'
     | '/documents/new'
     | '/documents/'
@@ -114,8 +174,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApprovalsRoute: typeof ApprovalsRoute
+  AuditRoute: typeof AuditRoute
   CalendarRoute: typeof CalendarRoute
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  RegisterRoute: typeof RegisterRoute
   ReportsRoute: typeof ReportsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   DocumentsIdRoute: typeof DocumentsIdRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
@@ -130,11 +195,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approvals': {
@@ -172,14 +265,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApprovalsRoute: ApprovalsRoute,
+  AuditRoute: AuditRoute,
   CalendarRoute: CalendarRoute,
+  LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
+  RegisterRoute: RegisterRoute,
   ReportsRoute: ReportsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   DocumentsIdRoute: DocumentsIdRoute,
   DocumentsNewRoute: DocumentsNewRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
